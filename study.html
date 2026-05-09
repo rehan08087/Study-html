@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StudyVault • Modern PDF Library</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  :root {
+    --bg: #0a0a0f;
+    --surface: rgba(20, 20, 32, 0.75);
+    --surface2: rgba(30, 30, 45, 0.85);
+    --border: rgba(64, 64, 88, 0.5);
+    --border-bright: rgba(124, 106, 255, 0.5);
+    --text: #f0f0ff;
+    --text-muted: #9a9ac0;
+    --text-dim: #6a6a8a;
+    --accent-bio: #3dffa0;
+    --accent-chem: #ff6b6b;
+    --accent-physics: #6bcaff;
+    --accent-math: #f5c842;
+    --accent-bangla: #ff9cf5;
+    --accent-eng: #ff9f6b;
+    --accent-ict: #6bfff5;
+    --accent: #7c6aff;
+    --accent-soft: rgba(124, 106, 255, 0.2);
+    --radius: 16px;
+    --radius-sm: 10px;
+    --shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
+    --glass-bg: rgba(15, 15, 25, 0.7);
+  }
+
+  body {
+    font-family: 'Syne', sans-serif;
+    background: radial-gradient(circle at 10% 20%, #0c0c14, #040408);
+    color: var(--text);
+    min-height: 100vh;
+    backdrop-filter: blur(2px);
+  }
+
+  /* glass header */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 32px;
+    background: rgba(10, 10, 15, 0.7);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .logo {
+    font-size: 1.5rem;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    background: linear-gradient(135deg, #fff, var(--accent));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .logo span { color: var(--accent); background: none; -webkit-background-clip: unset; }
+
+  .header-mono {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.75rem;
+    background: var(--accent-soft);
+    padding: 6px 14px;
+    border-radius: 40px;
+    backdrop-filter: blur(4px);
+    border: 1px solid var(--border);
+  }
+
+  .app {
+    display: flex;
+    height: calc(100vh - 65px);
+    overflow: hidden;
+  }
+
+  /* sidebar with glass */
+  .sidebar {
+    width: 240px;
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    padding: 20px 0;
+  }
+
+  .sidebar-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 2px;
+    padding: 0 20px;
+    margin-bottom: 14px;
+    color: var(--accent);
+  }
+
+  .subject-btn {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 12px 20px;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-weight: 600;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.2s ease;
+    border-left: 3px solid transparent;
+    font-size: 0.9rem;
+  }
+
+  .subject-btn:hover {
+    background: rgba(124, 106, 255, 0.1);
+    color: var(--text);
+    border-left-color: var(--accent);
+  }
+
+  .subject-btn.active {
+    background: rgba(124, 106, 255, 0.2);
+    color: white;
+    border-left-color: var(--accent);
+  }
+
+  .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+  }
+
+  /* main content */
+  .main {
+    flex: 1;
+    overflow-y: auto;
+    padding: 28px 36px;
+  }
+
+  /* breadcrumb */
+  .breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-bottom: 28px;
+    flex-wrap: wrap;
+  }
+  .breadcrumb span {
+    cursor: pointer;
+    transition: 0.2s;
+  }
+  .breadcrumb span:hover { color: var(--accent); }
+  .breadcrumb .active { color: var(--text); }
+
+  /* cards grid */
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 18px;
+  }
+
+  .card, .home-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    transition: all 0.25s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card:hover, .home-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--border-bright);
+    box-shadow: var(--shadow);
+  }
+
+  .card-icon { font-size: 1.8rem; margin-bottom: 12px; }
+  .card-name {
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .card-meta {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+  }
+  .card-tag {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 30px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    background: var(--accent);
+    color: #0a0a0f;
+    margin-top: 12px;
+  }
+
+  /* pdf cards */
+  .pdf-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(8px);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    transition: 0.2s;
+  }
+  .pdf-card:hover {
+    border-color: var(--border-bright);
+    background: rgba(30, 30, 45, 0.8);
+  }
+  .pdf-icon {
+    width: 48px;
+    height: 56px;
+    background: rgba(255, 100, 80, 0.15);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+  }
+  .pdf-info { flex: 1; }
+  .pdf-name {
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .pdf-meta {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--text-muted);
+  }
+  .pdf-actions {
+    display: flex;
+    gap: 8px;
+    opacity: 0;
+    transition: 0.2s;
+  }
+  .pdf-card:hover .pdf-actions { opacity: 1; }
+  .pdf-action-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: 0.2s;
+  }
+  .pdf-action-btn.open:hover { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
+  .pdf-action-btn:hover { border-color: #ff6b6b; color: #ff6b6b; }
+
+  /* buttons */
+  .add-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 18px;
+    background: var(--accent-soft);
+    border: 1px solid var(--accent);
+    border-radius: 40px;
+    color: var(--accent);
+    font-weight: 700;
+    cursor: pointer;
+    transition: 0.2s;
+  }
+  .add-btn:hover {
+    background: var(--accent);
+    color: #fff;
+    box-shadow: 0 0 12px rgba(124, 106, 255, 0.4);
+  }
+
+  /* modals */
+  .overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(6px);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+  }
+  .overlay.open { display: flex; }
+  .modal {
+    background: rgba(20, 20, 32, 0.95);
+    backdrop-filter: blur(16px);
+    border: 1px solid var(--border-bright);
+    border-radius: 24px;
+    padding: 28px;
+    width: 440px;
+    max-width: 90vw;
+    animation: slideUp 0.2s ease;
+  }
+  @keyframes slideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+  .form-input {
+    width: 100%;
+    padding: 12px 14px;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    color: white;
+    font-family: 'Syne', sans-serif;
+    outline: none;
+  }
+  .form-input:focus { border-color: var(--accent); }
+  .upload-zone {
+    border: 2px dashed var(--border);
+    border-radius: 16px;
+    padding: 28px;
+    text-align: center;
+    cursor: pointer;
+    transition: 0.2s;
+  }
+  .upload-zone:hover, .upload-zone.drag {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+  }
+
+  .toast {
+    position: fixed;
+    bottom: 28px;
+    right: 28px;
+    background: var(--surface2);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--accent);
+    padding: 12px 24px;
+    border-radius: 40px;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.8rem;
+    z-index: 999;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: 0.2s;
+    pointer-events: none;
+  }
+  .toast.show { opacity: 1; transform: translateY(0); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Study<span>Vault</span></div>
+  <div class="header-mono" id="breadcrumb-header">Home</div>
+</header>
+
+<div class="app">
+  <nav class="sidebar">
+    <div class="sidebar-label">Subjects</div>
+    <button class="subject-btn active" data-subject="home" onclick="navigate('home')">
+      <span class="dot" style="background:#7c6aff"></span> Home
+    </button>
+    <button class="subject-btn" data-subject="biology" onclick="navigate('biology')">
+      <span class="dot" style="background:var(--accent-bio)"></span> Biology
+    </button>
+    <button class="subject-btn" data-subject="chemistry" onclick="navigate('chemistry')">
+      <span class="dot" style="background:var(--accent-chem)"></span> Chemistry
+    </button>
+    <button class="subject-btn" data-subject="physics" onclick="navigate('physics')">
+      <span class="dot" style="background:var(--accent-physics)"></span> Physics
+    </button>
+    <button class="subject-btn" data-subject="higher_math" onclick="navigate('higher_math')">
+      <span class="dot" style="background:var(--accent-math)"></span> Higher Math
+    </button>
+    <button class="subject-btn" data-subject="bangla" onclick="navigate('bangla')">
+      <span class="dot" style="background:var(--accent-bangla)"></span> Bangla
+    </button>
+    <button class="subject-btn" data-subject="english" onclick="navigate('english')">
+      <span class="dot" style="background:var(--accent-eng)"></span> English
+    </button>
+    <button class="subject-btn" data-subject="ict" onclick="navigate('ict')">
+      <span class="dot" style="background:var(--accent-ict)"></span> ICT
+    </button>
+  </nav>
+
+  <main class="main" id="main-content"></main>
+</div>
+
+<!-- Modals -->
+<div class="overlay" id="create-modal">
+  <div class="modal">
+    <div class="modal-title" style="font-weight:800;">Create New Chapter</div>
+    <div class="modal-sub" style="color:var(--text-muted); margin-bottom:18px;">Add a chapter to organize your PDFs</div>
+    <div class="form-group"><label class="form-label">Name</label><input class="form-input" id="create-name" placeholder="e.g. Chapter 1: Cell Biology" /></div>
+    <div class="form-group"><label class="form-label">Description</label><input class="form-input" id="create-desc" placeholder="Short description..." /></div>
+    <div class="modal-actions" style="display:flex; justify-content:flex-end; gap:12px; margin-top:24px;">
+      <button class="btn-cancel" style="background:none; border:1px solid var(--border); padding:8px 16px; border-radius:40px;" onclick="closeModal('create-modal')">Cancel</button>
+      <button class="btn-create" style="background:var(--accent); border:none; padding:8px 22px; border-radius:40px; font-weight:700;" onclick="confirmCreate()">Create</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="upload-modal">
+  <div class="modal">
+    <div class="modal-title">Upload PDF</div>
+    <div class="modal-sub" id="upload-modal-sub" style="margin-bottom:16px;"></div>
+    <div class="form-group"><label class="form-label">PDF Title</label><input class="form-input" id="pdf-title" placeholder="Lecture Notes" /></div>
+    <div class="form-group">
+      <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()">
+        <div class="up-icon">📎</div>
+        <p><span style="color:var(--accent);">Click to browse</span> or drag & drop</p>
+        <div class="file-chosen" id="file-chosen" style="font-size:0.7rem; margin-top:8px;"></div>
+      </div>
+      <input type="file" id="file-input" accept=".pdf" style="display:none" />
+    </div>
+    <div class="modal-actions" style="display:flex; justify-content:flex-end; gap:12px; margin-top:20px;">
+      <button class="btn-cancel" style="background:none; border:1px solid var(--border); padding:8px 16px; border-radius:40px;" onclick="closeModal('upload-modal')">Cancel</button>
+      <button class="btn-create" style="background:var(--accent); border:none; padding:8px 22px; border-radius:40px;" onclick="confirmUpload()">Upload</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="delete-modal">
+  <div class="modal">
+    <div class="modal-title">Delete?</div>
+    <div class="modal-sub" id="delete-modal-sub" style="margin-bottom:12px;">This action cannot be undone.</div>
+    <p class="delete-warning" style="color:#ff6b6b;">⚠ All contents inside will also be deleted.</p>
+    <div class="modal-actions" style="display:flex; justify-content:flex-end; gap:12px; margin-top:24px;">
+      <button class="btn-cancel" style="background:none; border:1px solid var(--border); padding:8px 16px; border-radius:40px;" onclick="closeModal('delete-modal')">Cancel</button>
+      <button class="btn-delete" style="background:#ff6b6b; border:none; padding:8px 22px; border-radius:40px; font-weight:700;" onclick="confirmDelete()">Delete</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  // ========== IndexedDB Setup ==========
+  const DB_NAME = 'StudyVaultDB';
+  const DB_VERSION = 1;
+  let db = null;
+
+  // In-memory metadata store (subjects → papers → chapters → pdfs without blob data)
+  let appMetadata = {};
+
+  // Open IndexedDB
+  function openDB() {
+    return new Promise((resolve, reject) => {
+      const request = indexedDB.open(DB_NAME, DB_VERSION);
+      request.onerror = () => reject(request.error);
+      request.onsuccess = () => {
+        db = request.result;
+        resolve(db);
+      };
+      request.onupgradeneeded = (ev) => {
+        const db = ev.target.result;
+        if (!db.objectStoreNames.contains('metadata')) {
+          db.createObjectStore('metadata', { keyPath: 'id' });
+        }
+        if (!db.objectStoreNames.contains('pdfs')) {
+          db.createObjectStore('pdfs', { keyPath: 'id' });
+        }
+      };
+    });
+  }
+
+  // Load metadata from IndexedDB
+  async function loadMetadata() {
+    if (!db) await openDB();
+    return new Promise((resolve) => {
+      const tx = db.transaction('metadata', 'readonly');
+      const store = tx.objectStore('metadata');
+      const getReq = store.get('appData');
+      getReq.onsuccess = () => {
+        if (getReq.result) {
+          appMetadata = getReq.result.data;
+        } else {
+          appMetadata = {};
+        }
+        resolve(appMetadata);
+      };
+      getReq.onerror = () => resolve(appMetadata);
+    });
+  }
+
+  // Save entire metadata tree to IndexedDB
+  async function saveMetadata() {
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction('metadata', 'readwrite');
+      const store = tx.objectStore('metadata');
+      const req = store.put({ id: 'appData', data: appMetadata });
+      req.onsuccess = () => resolve();
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  // Store PDF blob
+  async function storePdfBlob(pdfId, blob) {
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction('pdfs', 'readwrite');
+      const store = tx.objectStore('pdfs');
+      const req = store.put({ id: pdfId, blob });
+      req.onsuccess = () => resolve();
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  // Retrieve PDF blob
+  async function getPdfBlob(pdfId) {
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction('pdfs', 'readonly');
+      const store = tx.objectStore('pdfs');
+      const req = store.get(pdfId);
+      req.onsuccess = () => resolve(req.result?.blob);
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  // Delete PDF blob
+  async function deletePdfBlob(pdfId) {
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction('pdfs', 'readwrite');
+      const store = tx.objectStore('pdfs');
+      const req = store.delete(pdfId);
+      req.onsuccess = () => resolve();
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  // ========== Helpers to work with appMetadata ==========
+  const SUBJECTS = {
+    biology:    { name: 'Biology',     icon: '🧬', color: 'var(--accent-bio)',     hasPapers: true  },
+    chemistry:  { name: 'Chemistry',   icon: '⚗️',  color: 'var(--accent-chem)',    hasPapers: true  },
+    physics:    { name: 'Physics',     icon: '⚡',  color: 'var(--accent-physics)', hasPapers: true  },
+    higher_math:{ name: 'Higher Math', icon: '📐', color: 'var(--accent-math)',    hasPapers: true  },
+    bangla:     { name: 'Bangla',      icon: '📖', color: 'var(--accent-bangla)',  hasPapers: false },
+    english:    { name: 'English',     icon: '✒️',  color: 'var(--accent-eng)',     hasPapers: false },
+    ict:        { name: 'ICT',         icon: '💻', color: 'var(--accent-ict)',     hasPapers: false },
+  };
+
+  function getSubjectData(sub) {
+    if (!appMetadata[sub]) appMetadata[sub] = {};
+    return appMetadata[sub];
+  }
+
+  function getChapters(sub, paper) {
+    const sd = getSubjectData(sub);
+    if (paper) {
+      if (!sd[paper]) sd[paper] = {};
+      return Object.values(sd[paper]);
+    } else {
+      return Object.entries(sd)
+        .filter(([k]) => !k.startsWith('paper_'))
+        .map(([, v]) => v);
+    }
+  }
+
+  function getChapterObj(sub, paper, chId) {
+    const sd = getSubjectData(sub);
+    if (paper) return sd[paper]?.[chId];
+    return sd[chId];
+  }
+
+  // ========== UI State ==========
+  let state = { view: 'home', subject: null, paper: null, chapter: null };
+  let pendingAction = null;
+  let pendingDelete = null;
+  let chosenFile = null;
+
+  async function navigate(subject, paper, chapter) {
+    state.subject = subject === 'home' ? null : subject;
+    state.paper = paper || null;
+    state.chapter = chapter || null;
+    state.view = subject === 'home' ? 'home' : (chapter ? 'chapter' : (paper ? 'paper' : 'subject'));
+    document.querySelectorAll('.subject-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.subject === (subject || 'home'));
+    });
+    await render();
+  }
+
+  // ========== Render Functions (async) ==========
+  async function render() {
+    if (state.view === 'home') await renderHome();
+    else if (state.view === 'subject') await renderSubject();
+    else if (state.view === 'paper') await renderPaperLevel();
+    else if (state.view === 'chapter') await renderChapter();
+  }
+
+  function renderBreadcrumb(parts) {
+    const bc = ['<span onclick="navigate(\'home\')">Home</span>'];
+    parts.forEach((p, i) => {
+      bc.push('<span class="breadcrumb-sep">/</span>');
+      if (i === parts.length - 1) bc.push(`<span class="active">${p.label}</span>`);
+      else bc.push(`<span onclick="${p.action}">${p.label}</span>`);
+    });
+    document.getElementById('breadcrumb-header').textContent = parts.map(p => p.label).join(' / ');
+    return `<div class="breadcrumb">${bc.join('')}</div>`;
+  }
+
+  async function renderHome() {
+    let totalPdfs = 0, totalChapters = 0;
+    for (const sub in appMetadata) {
+      const sd = appMetadata[sub];
+      for (const key in sd) {
+        if (key.startsWith('paper_')) {
+          for (const ch in sd[key]) totalChapters++, totalPdfs += (sd[key][ch].pdfs?.length || 0);
+        } else if (typeof sd[key] === 'object' && sd[key].pdfs !== undefined) {
+          totalChapters++, totalPdfs += (sd[key].pdfs?.length || 0);
+        }
+      }
+    }
+    const cards = Object.entries(SUBJECTS).map(([key, s]) => `
+      <div class="home-card" style="border-top: 3px solid ${s.color}" onclick="navigate('${key}')">
+        <div class="home-card-icon" style="font-size:2rem;">${s.icon}</div>
+        <div><div class="card-name">${s.name}</div><div class="card-meta">${s.hasPapers ? '1st & 2nd Paper' : 'Direct Chapters'}</div></div>
+      </div>
+    `).join('');
+    const main = document.getElementById('main-content');
+    main.innerHTML = `
+      <div class="home-title" style="font-size:2rem; font-weight:800;">Welcome back 👋</div>
+      <div class="home-sub" style="margin-bottom:24px; color:var(--text-muted);">Your personal study PDF library</div>
+      <div class="home-stats" style="display:flex; gap:32px; margin-bottom:32px;">
+        <div><div class="stat-val" style="font-size:1.8rem; font-weight:800; color:var(--accent);">${Object.keys(SUBJECTS).length}</div><div class="stat-key">Subjects</div></div>
+        <div><div class="stat-val" style="font-size:1.8rem; font-weight:800; color:var(--accent);">${totalChapters}</div><div class="stat-key">Chapters</div></div>
+        <div><div class="stat-val" style="font-size:1.8rem; font-weight:800; color:var(--accent);">${totalPdfs}</div><div class="stat-key">PDFs stored</div></div>
+      </div>
+      <div class="home-grid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(180px,1fr)); gap:16px;">${cards}</div>
+      <div class="notice" style="margin-top:40px; background:rgba(0,0,0,0.3); border-radius:16px; padding:12px 20px;">📂 <span style="color:var(--accent);">Note:</span> PDFs are stored in IndexedDB – no size limit.</div>
+    `;
+  }
+
+  async function renderSubject() {
+    const sub = state.subject;
+    const s = SUBJECTS[sub];
+    const bc = renderBreadcrumb([{ label: s.name, action: `navigate('${sub}')` }]);
+    if (s.hasPapers) {
+      document.getElementById('main-content').innerHTML = `${bc}
+        <div class="section-header" style="display:flex; justify-content:space-between; margin-bottom:24px;">
+          <div class="section-title" style="display:flex; gap:12px; align-items:center;"><div class="section-accent-bar" style="width:4px; height:28px; background:${s.color}; border-radius:4px;"></div>${s.icon} ${s.name}</div>
+        </div>
+        <div class="cards-grid">
+          ${['1st Paper', '2nd Paper'].map((p, i) => `<div class="card" style="--card-color:${s.color}" onclick="navigate('${sub}','paper_${i+1}')">
+            <div class="card-icon">${i === 0 ? '📗' : '📘'}</div><div class="card-name">${p}</div>
+            <div class="card-meta">${s.name} · ${Object.keys(getSubjectData(sub)[`paper_${i+1}`] || {}).length} chapters</div>
+            <div class="card-tag">${p}</div>
+          </div>`).join('')}
+        </div>`;
+    } else {
+      await renderChapterLevel(sub, null, bc);
+    }
+  }
+
+  async function renderPaperLevel() {
+    const sub = state.subject, paper = state.paper;
+    const s = SUBJECTS[sub];
+    const paperLabel = paper === 'paper_1' ? '1st Paper' : '2nd Paper';
+    const bc = renderBreadcrumb([
+      { label: s.name, action: `navigate('${sub}')` },
+      { label: paperLabel, action: `navigate('${sub}','${paper}')` }
+    ]);
+    await renderChapterLevel(sub, paper, bc);
+  }
+
+  async function renderChapterLevel(sub, paper, bc) {
+    const s = SUBJECTS[sub];
+    const chapters = getChapters(sub, paper);
+    const chCards = chapters.length ? chapters.map(ch => `
+      <div class="card" style="--card-color:${s.color}" onclick="navigate('${sub}','${paper || ''}','${ch.id}')">
+        <div class="card-icon">📂</div>
+        <div class="card-name">${ch.name}</div>
+        <div class="card-meta">${ch.desc || 'No description'} · ${ch.pdfs?.length || 0} PDFs</div>
+        <div style="display:flex; justify-content:space-between;"><div class="card-tag">Chapter</div>
+        <button onclick="event.stopPropagation();openDeleteChapter('${sub}','${paper || ''}','${ch.id}')" style="background:none; border:none; color:var(--text-dim); cursor:pointer;">✕</button></div>
+      </div>`).join('') : `<div class="empty-state" style="text-align:center; padding:48px;">📂 No chapters yet. Create one!</div>`;
+    document.getElementById('main-content').innerHTML = `${bc}
+      <div class="section-header" style="display:flex; justify-content:space-between;"><div class="section-title">${paper ? paper + ' — ' : ''}${s.name}</div>
+      <button class="add-btn" onclick="openCreateChapter('${sub}','${paper || ''}')">+ New Chapter</button></div>
+      <div class="cards-grid">${chCards}</div>`;
+  }
+
+  async function renderChapter() {
+    const sub = state.subject, paper = state.paper, chId = state.chapter;
+    const s = SUBJECTS[sub];
+    const ch = getChapterObj(sub, paper, chId);
+    const paperLabel = paper ? (paper === 'paper_1' ? '1st Paper' : '2nd Paper') : null;
+    const bcParts = [{ label: s.name, action: `navigate('${sub}')` }];
+    if (paperLabel) bcParts.push({ label: paperLabel, action: `navigate('${sub}','${paper}')` });
+    bcParts.push({ label: ch?.name || 'Chapter', action: `navigate('${sub}','${paper || ''}','${chId}')` });
+    const bc = renderBreadcrumb(bcParts);
+    const pdfs = ch?.pdfs || [];
+    const pdfList = pdfs.length ? pdfs.map(pdf => `
+      <div class="pdf-card">
+        <div class="pdf-icon">📄</div>
+        <div class="pdf-info"><div class="pdf-name">${pdf.title}</div><div class="pdf-meta">${pdf.filename} · ${pdf.size} · ${pdf.date}</div></div>
+        <div class="pdf-actions">
+          <button class="pdf-action-btn open" onclick="openPdf('${sub}','${paper || ''}','${chId}','${pdf.id}')">↗</button>
+          <button class="pdf-action-btn" onclick="openDeletePdf('${sub}','${paper || ''}','${chId}','${pdf.id}')">✕</button>
+        </div>
+      </div>`).join('') : `<div class="empty-state" style="text-align:center; padding:48px;">📄 No PDFs yet. Upload one!</div>`;
+    document.getElementById('main-content').innerHTML = `${bc}
+      <div class="section-header" style="display:flex; justify-content:space-between;"><div class="section-title">${ch?.name}</div>
+      <button class="add-btn" onclick="openUploadPdf('${sub}','${paper || ''}','${chId}')">+ Upload PDF</button></div>
+      ${ch?.desc ? `<div style="color:var(--text-muted); margin-bottom:20px;">${ch.desc}</div>` : ''}
+      <div class="pdf-grid" style="display:flex; flex-direction:column; gap:12px;">${pdfList}</div>`;
+  }
+
+  // ========== Modals & Actions ==========
+  function openModal(id) { document.getElementById(id).classList.add('open'); }
+  function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+  function openCreateChapter(sub, paper) {
+    pendingAction = { type: 'chapter', sub, paper: paper || null };
+    document.getElementById('create-name').value = '';
+    document.getElementById('create-desc').value = '';
+    openModal('create-modal');
+  }
+
+  async function confirmCreate() {
+    const name = document.getElementById('create-name').value.trim();
+    if (!name) return showToast('Enter a name');
+    const desc = document.getElementById('create-desc').value.trim();
+    const { sub, paper } = pendingAction;
+    const id = 'ch_' + Date.now();
+    const sd = getSubjectData(sub);
+    if (paper) {
+      if (!sd[paper]) sd[paper] = {};
+      sd[paper][id] = { id, name, desc, pdfs: [] };
+    } else {
+      sd[id] = { id, name, desc, pdfs: [] };
+    }
+    await saveMetadata();
+    closeModal('create-modal');
+    showToast('Chapter created');
+    await render();
+  }
+
+  function openUploadPdf(sub, paper, chId) {
+    pendingAction = { type: 'pdf', sub, paper: paper || null, chId };
+    document.getElementById('upload-modal-sub').innerText = `Upload to: ${getChapterObj(sub, paper, chId)?.name}`;
+    document.getElementById('pdf-title').value = '';
+    document.getElementById('file-chosen').innerText = '';
+    chosenFile = null;
+    openModal('upload-modal');
+  }
+
+  function onFileChosen(e) {
+    chosenFile = e.target.files[0];
+    document.getElementById('file-chosen').innerText = chosenFile ? `✓ ${chosenFile.name}` : '';
+  }
+
+  async function confirmUpload() {
+    const title = document.getElementById('pdf-title').value.trim();
+    if (!title) return showToast('Enter a title');
+    if (!chosenFile) return showToast('Select a PDF');
+    const { sub, paper, chId } = pendingAction;
+    const ch = getChapterObj(sub, paper, chId);
+    if (!ch) return;
+
+    const pdfId = 'pdf_' + Date.now();
+    const blob = await chosenFile.arrayBuffer().then(buf => new Blob([buf], { type: 'application/pdf' }));
+    await storePdfBlob(pdfId, blob);
+
+    const pdfMeta = {
+      id: pdfId,
+      title,
+      filename: chosenFile.name,
+      size: formatSize(chosenFile.size),
+      date: new Date().toLocaleDateString('en-GB')
+    };
+    if (!ch.pdfs) ch.pdfs = [];
+    ch.pdfs.push(pdfMeta);
+    await saveMetadata();
+    closeModal('upload-modal');
+    showToast('PDF uploaded');
+    await render();
+  }
+
+  async function openPdf(sub, paper, chId, pdfId) {
+    const ch = getChapterObj(sub, paper, chId);
+    const pdfMeta = ch?.pdfs?.find(p => p.id === pdfId);
+    if (!pdfMeta) return;
+    const blob = await getPdfBlob(pdfId);
+    if (!blob) return;
+    const url = URL.createObjectURL(blob);
+    const win = window.open();
+    win.document.write(`<iframe src="${url}" style="width:100%;height:100%;border:none"></iframe>`);
+    win.onload = () => URL.revokeObjectURL(url);
+  }
+
+  function openDeleteChapter(sub, paper, chId) {
+    const ch = getChapterObj(sub, paper, chId);
+    pendingDelete = { type: 'chapter', sub, paper: paper || null, chId };
+    document.getElementById('delete-modal-sub').innerText = `Delete chapter "${ch?.name}"?`;
+    openModal('delete-modal');
+  }
+
+  function openDeletePdf(sub, paper, chId, pdfId) {
+    const ch = getChapterObj(sub, paper, chId);
+    const pdf = ch?.pdfs?.find(p => p.id === pdfId);
+    pendingDelete = { type: 'pdf', sub, paper: paper || null, chId, pdfId };
+    document.getElementById('delete-modal-sub').innerText = `Delete PDF "${pdf?.title}"?`;
+    openModal('delete-modal');
+  }
+
+  async function confirmDelete() {
+    if (!pendingDelete) return;
+    const { type, sub, paper, chId, pdfId } = pendingDelete;
+    const sd = getSubjectData(sub);
+    if (type === 'chapter') {
+      if (paper) delete sd[paper]?.[chId];
+      else delete sd[chId];
+      showToast('Chapter deleted');
+    } else if (type === 'pdf') {
+      const ch = getChapterObj(sub, paper, chId);
+      if (ch) {
+        ch.pdfs = ch.pdfs.filter(p => p.id !== pdfId);
+        await deletePdfBlob(pdfId);
+      }
+      showToast('PDF deleted');
+    }
+    await saveMetadata();
+    closeModal('delete-modal');
+    await render();
+  }
+
+  function formatSize(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / 1024 / 1024).toFixed(1) + ' MB';
+  }
+
+  let toastTimer;
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
+  }
+
+  // Drag & drop
+  const uploadZone = document.getElementById('upload-zone');
+  if (uploadZone) {
+    uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('drag'); });
+    uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag'));
+    uploadZone.addEventListener('drop', e => {
+      e.preventDefault();
+      uploadZone.classList.remove('drag');
+      const f = e.dataTransfer.files[0];
+      if (f && f.name.endsWith('.pdf')) {
+        chosenFile = f;
+        document.getElementById('file-chosen').innerText = `✓ ${f.name}`;
+        if (!document.getElementById('pdf-title').value) document.getElementById('pdf-title').value = f.name.replace('.pdf', '');
+      }
+    });
+  }
+  document.getElementById('file-input').addEventListener('change', onFileChosen);
+
+  // Enter to create
+  document.getElementById('create-name').addEventListener('keydown', e => { if (e.key === 'Enter') confirmCreate(); });
+  document.getElementById('create-desc').addEventListener('keydown', e => { if (e.key === 'Enter') confirmCreate(); });
+
+  // init
+  (async () => {
+    await openDB();
+    await loadMetadata();
+    await navigate('home');
+  })();
+</script>
+</body>
+</html>
